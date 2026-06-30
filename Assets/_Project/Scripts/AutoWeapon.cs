@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.Pool;
 
 public class AutoWeapon : MonoBehaviour
@@ -42,8 +42,7 @@ public class AutoWeapon : MonoBehaviour
         {
             projectile.SetPool(projectilePool);
         }
-
-        // Изначально выключаем
+        
         projGO.SetActive(false);
 
         return projectile;
@@ -51,7 +50,7 @@ public class AutoWeapon : MonoBehaviour
 
     private void OnGetProjectile(Projectile projectile)
     {
-        // Объект уже активируется в методе Seek
+
         projectile.transform.position = transform.position;
         projectile.transform.rotation = Quaternion.identity;
     }
@@ -126,7 +125,7 @@ public class AutoWeapon : MonoBehaviour
     public void UpgradeDamage(float amount)
     {
         damage += amount;
-        Debug.Log($"Урон оружия повышен! Текущий урон: {damage}");
+        Debug.Log($"пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ! пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ: {damage}");
     }
 
     private void OnDrawGizmosSelected()

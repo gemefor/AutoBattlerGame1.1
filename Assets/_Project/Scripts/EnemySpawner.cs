@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using UnityEngine.Pool; // Обязательно добавляем это пространство имен!
 
 public class EnemySpawner : MonoBehaviour
