@@ -1,5 +1,5 @@
 п»їusing UnityEngine;
-using System; 
+using System;
 
 public class PlayerController : MonoBehaviour
 {
@@ -12,43 +12,61 @@ public class PlayerController : MonoBehaviour
     private int currentExperience = 0;
     private int experienceToNextLevel = 10;
     private int currentLevel = 1;
+    
+    [Header("Experience Settings")]
+    [SerializeField] private float levelUpMultiplier = 1.5f; 
 
-    // Событие, которое будет сообщать UIManager'у об изменениях
-    // Передает: Текущий Уровень, Текущий Опыт, Опыт для следующего уровня
+   
     public event Action<int, int, int> OnExperienceChanged;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        
+        if (rb == null)
+        {
+            Debug.LogError("Rigidbody2D not found on PlayerController!");
+        }
 
-        // При старте игры сразу обновляем UI стартовыми значениями (1 уровень, 0 опыта)
+        // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ UI
         OnExperienceChanged?.Invoke(currentLevel, currentExperience, experienceToNextLevel);
     }
 
     private void Update()
     {
-        // Сбор ввода от игрока (WASD / Стрелочки)
+        // РџРѕР»СѓС‡РµРЅРёРµ РІРІРѕРґР°
         moveInput.x = Input.GetAxisRaw("Horizontal");
         moveInput.y = Input.GetAxisRaw("Vertical");
+        
     }
 
     private void FixedUpdate()
     {
-        // Физическое движение через Rigidbody2D
-        rb.MovePosition(rb.position + moveInput.normalized * moveSpeed * Time.fixedDeltaTime);
+        // Р”РІРёР¶РµРЅРёРµ С‡РµСЂРµР· Rigidbody2D СЃ РЅРѕСЂРјР°Р»РёР·Р°С†РёРµР№ РІРµРєС‚РѕСЂР°
+        if (moveInput.magnitude > 0.1f) 
+        {
+            rb.MovePosition(rb.position + moveInput.normalized * moveSpeed * Time.fixedDeltaTime);
+        }
     }
+
     public void AddExperience(int amount)
     {
-        currentExperience += amount;
-        Debug.Log($"Опыт получен: +{amount}. Всего: {currentExperience}/{experienceToNextLevel}");
+        if (amount <= 0) // Р”РѕР±Р°РІРёР» РїСЂРѕРІРµСЂРєСѓ РЅР° РїРѕР»РѕР¶РёС‚РµР»СЊРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ
+        {
+            Debug.LogWarning("Experience amount must be positive!");
+            return;
+        }
 
-        // Если набрали нужное количество опыта — повышаем уровень
-        if (currentExperience >= experienceToNextLevel)
+        currentExperience += amount;
+        Debug.Log($"РџРѕР»СѓС‡РµРЅРѕ РѕРїС‹С‚Р°: +{amount}. РўРµРєСѓС‰РёР№ РїСЂРѕРіСЂРµСЃСЃ: {currentExperience}/{experienceToNextLevel}");
+
+        // РџСЂРѕРІРµСЂРєР° РЅР° РїРѕРІС‹С€РµРЅРёРµ СѓСЂРѕРІРЅСЏ
+        while (currentExperience >= experienceToNextLevel) // РР·РјРµРЅРёР» if РЅР° while РґР»СЏ РјРЅРѕР¶РµСЃС‚РІРµРЅРЅС‹С… СѓСЂРѕРІРЅРµР№
         {
             LevelUp();
         }
 
-        // Кликаем по событию, чтобы UI перерисовал цифры на экране
+        // РћР±РЅРѕРІР»РµРЅРёРµ UI
         OnExperienceChanged?.Invoke(currentLevel, currentExperience, experienceToNextLevel);
     }
 
@@ -57,17 +75,25 @@ public class PlayerController : MonoBehaviour
         currentLevel++;
         currentExperience -= experienceToNextLevel;
 
-        // Увеличиваем планку опыта для следующего уровня на 50%
-        experienceToNextLevel = Mathf.RoundToInt(experienceToNextLevel * 1.5f);
+        // РЈРІРµР»РёС‡РµРЅРёРµ С‚СЂРµР±СѓРµРјРѕРіРѕ РѕРїС‹С‚Р° СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј РЅР°СЃС‚СЂР°РёРІР°РµРјРѕРіРѕ РјРЅРѕР¶РёС‚РµР»СЏ
+        experienceToNextLevel = Mathf.RoundToInt(experienceToNextLevel * levelUpMultiplier);
 
-        Debug.Log($"УРОВЕНЬ ПОВЫШЕН! Теперь у тебя {currentLevel} уровень.");
-
-        // Сюда мы в следующем шаге добавим появление меню выбора перков
+        Debug.Log($"РџРѕРІС‹С€РµРЅРёРµ СѓСЂРѕРІРЅСЏ! РўРµРєСѓС‰РёР№ СѓСЂРѕРІРµРЅСЊ: {currentLevel}. РќСѓР¶РЅРѕ РѕРїС‹С‚Р° РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ: {experienceToNextLevel}");
+        
+        // РњРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ СЌС„С„РµРєС‚ РїРѕРІС‹С€РµРЅРёСЏ СѓСЂРѕРІРЅСЏ
+        // РќР°РїСЂРёРјРµСЂ, РЅРµР±РѕР»СЊС€РѕРµ СѓРІРµР»РёС‡РµРЅРёРµ СЃРєРѕСЂРѕСЃС‚Рё РїСЂРё РєР°Р¶РґРѕРј СѓСЂРѕРІРЅРµ
+        // UpgradeSpeed(1.05f); // Р Р°Р·РєРѕРјРјРµРЅС‚РёСЂРѕРІР°С‚СЊ РµСЃР»Рё РЅСѓР¶РЅРѕ
     }
+
     public void UpgradeSpeed(float multiplier)
     {
-        moveSpeed *= multiplier; // Увеличиваем текущую скорость игрока
-        Debug.Log($"Скорость игрока увеличена! Новая скорость: {moveSpeed}");
+        if (multiplier <= 0) 
+        {
+            Debug.LogWarning("Speed multiplier must be positive!");
+            return;
+        }
+        
+        moveSpeed *= multiplier;
+        Debug.Log($"РЎРєРѕСЂРѕСЃС‚СЊ СѓРІРµР»РёС‡РµРЅР°! РўРµРєСѓС‰Р°СЏ СЃРєРѕСЂРѕСЃС‚СЊ: {moveSpeed}");
     }
-
 }
