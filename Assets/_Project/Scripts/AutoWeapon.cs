@@ -3,21 +3,37 @@ using UnityEngine.Pool;
 
 public class AutoWeapon : MonoBehaviour
 {
-    [Header("Weapon Settings")]
-    [SerializeField] private GameObject projectilePrefab;
-    [SerializeField] private float fireRate = 1.5f;
-    [SerializeField] private float attackRange = 7f;
-    [SerializeField] private float projectileSpeed = 12f;
-    [SerializeField] private float damage = 25f;
-    [SerializeField] private int defaultPoolSize = 20;
-    [SerializeField] private int maxPoolSize = 50;
+    [Header("Weapon Data")]
+    [SerializeField] private WeaponData weaponData;
+    [SerializeField] private UpgradeData[] availableUpgrades;
 
     private float fireCountdown = 0f;
     private IObjectPool<Projectile> projectilePool;
 
+    // Текущие значения (могут меняться через апгрейды)
+    private float currentDamage;
+    private float currentFireRate;
+    private float currentAttackRange;
+    private float currentProjectileSpeed;
+
     private void Awake()
     {
+        if (weaponData == null)
+        {
+            Debug.LogError("WeaponData is not assigned!", this);
+            return;
+        }
+
+        InitializeStats();
         InitializePool();
+    }
+
+    private void InitializeStats()
+    {
+        currentDamage = weaponData.damage;
+        currentFireRate = weaponData.fireRate;
+        currentAttackRange = weaponData.attackRange;
+        currentProjectileSpeed = weaponData.projectileSpeed;
     }
 
     private void InitializePool()
@@ -28,29 +44,27 @@ public class AutoWeapon : MonoBehaviour
             actionOnRelease: OnReleaseProjectile,
             actionOnDestroy: OnDestroyProjectile,
             collectionCheck: true,
-            defaultCapacity: defaultPoolSize,
-            maxSize: maxPoolSize
+            defaultCapacity: weaponData.defaultPoolSize,
+            maxSize: weaponData.maxPoolSize
         );
     }
 
     private Projectile CreateProjectile()
     {
-        GameObject projGO = Instantiate(projectilePrefab);
+        GameObject projGO = Instantiate(weaponData.projectilePrefab);
         Projectile projectile = projGO.GetComponent<Projectile>();
 
         if (projectile != null)
         {
             projectile.SetPool(projectilePool);
         }
-        
-        projGO.SetActive(false);
 
+        projGO.SetActive(false);
         return projectile;
     }
 
     private void OnGetProjectile(Projectile projectile)
     {
-
         projectile.transform.position = transform.position;
         projectile.transform.rotation = Quaternion.identity;
     }
@@ -76,7 +90,7 @@ public class AutoWeapon : MonoBehaviour
             if (nearestEnemy != null)
             {
                 Shoot(nearestEnemy);
-                fireCountdown = fireRate;
+                fireCountdown = currentFireRate;
             }
         }
     }
@@ -102,7 +116,7 @@ public class AutoWeapon : MonoBehaviour
 
             float distanceToEnemy = Vector3.Distance(transform.position, enemy.transform.position);
 
-            if (distanceToEnemy < shortestDistance && distanceToEnemy <= attackRange)
+            if (distanceToEnemy < shortestDistance && distanceToEnemy <= currentAttackRange)
             {
                 shortestDistance = distanceToEnemy;
                 closestEnemy = enemy.transform;
@@ -118,19 +132,49 @@ public class AutoWeapon : MonoBehaviour
 
         if (projectile != null)
         {
-            projectile.Seek(enemyTarget, damage, projectileSpeed);
+            projectile.Seek(enemyTarget, currentDamage, currentProjectileSpeed);
         }
     }
 
-    public void UpgradeDamage(float amount)
+    public void ApplyUpgrade(UpgradeData upgrade)
     {
-        damage += amount;
-        Debug.Log($"���� ������ �������! ������� ����: {damage}");
+        if (upgrade == null) return;
+
+        switch (upgrade.upgradeType)
+        {
+            case UpgradeType.Damage:
+                currentDamage += upgrade.value;
+                Debug.Log($"Damage upgraded! Current damage: {currentDamage}");
+                break;
+
+            case UpgradeType.FireRate:
+                currentFireRate *= upgrade.value;
+                Debug.Log($"Fire Rate upgraded! Current fire rate: {currentFireRate}");
+                break;
+
+            case UpgradeType.Range:
+                currentAttackRange += upgrade.value;
+                Debug.Log($"Range upgraded! Current range: {currentAttackRange}");
+                break;
+
+            case UpgradeType.ProjectileSpeed:
+                currentProjectileSpeed += upgrade.value;
+                Debug.Log($"Projectile Speed upgraded! Current speed: {currentProjectileSpeed}");
+                break;
+        }
     }
+
+    // Геттеры для UI
+    public float GetDamage() => currentDamage;
+    public float GetFireRate() => currentFireRate;
+    public float GetRange() => currentAttackRange;
+    public float GetProjectileSpeed() => currentProjectileSpeed;
+
+    public UpgradeData[] GetAvailableUpgrades() => availableUpgrades;
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(transform.position, currentAttackRange);
     }
 }

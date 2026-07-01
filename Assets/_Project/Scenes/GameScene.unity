@@ -156,6 +156,10 @@ MonoBehaviour:
   speedButton: {fileID: 128432009}
   healButton: {fileID: 964125730}
   upgradeDamageButton: {fileID: 1047057219}
+  speedUpgradeData: {fileID: 0}
+  damageUpgradeData: {fileID: 11400000, guid: d9f93743e295977488b2c712ef5b7305, type: 2}
+  moveSpeedUpgradeData: {fileID: 11400000, guid: 17b5e11f0b8f5ce43af1f3a609b2e3ca, type: 2}
+  healAmount: 30
   pauseMenuPanel: {fileID: 692892664}
   resumeButton: {fileID: 221788116}
   mainMenuButton: {fileID: 167435093}
@@ -1714,7 +1718,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &692892665
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2076,13 +2080,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fce582f5f61e2d4d8e25c3e99a06a58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AutoWeapon
-  projectilePrefab: {fileID: 6079975635868751732, guid: db81bd91261a46941b489cae3fe5af66, type: 3}
-  fireRate: 0.5
-  attackRange: 7
-  projectileSpeed: 12
-  damage: 25
-  defaultPoolSize: 20
-  maxPoolSize: 50
+  weaponData: {fileID: 11400000, guid: 097144b752aa7dc4ca35131dbeaba110, type: 2}
+  availableUpgrades: []
 --- !u!1 &886203859
 GameObject:
   m_ObjectHideFlags: 0
