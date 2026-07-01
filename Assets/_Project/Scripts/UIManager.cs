@@ -19,6 +19,12 @@ public class UIManager : MonoBehaviour
     [SerializeField] private Button healButton;
     [SerializeField] private Button upgradeDamageButton;
 
+    [Header("Upgrade Data")]
+    [SerializeField] private UpgradeData speedUpgradeData;
+    [SerializeField] private UpgradeData damageUpgradeData;
+    [SerializeField] private UpgradeData moveSpeedUpgradeData;
+    [SerializeField] private float healAmount = 30f;
+
     [Header("Pause Menu Elements")]
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private Button resumeButton;
@@ -36,25 +42,23 @@ public class UIManager : MonoBehaviour
     [SerializeField] private string gameSceneName = "Game";
 
     [Header("Settings")]
-    [SerializeField] private bool isMainMenu = false; // Отмечаем, если это главное меню
+    [SerializeField] private bool isMainMenu = false;
 
     private bool isGameOver = false;
     private bool isPaused = false;
+    private AutoWeapon cachedWeapon;
 
     private void Awake()
     {
-        // Если это главное меню - показываем его, скрываем всё остальное
         if (isMainMenu)
         {
             ShowMainMenu();
         }
         else
         {
-            // Скрываем панель паузы при старте игры
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
 
-            // Скрываем главное меню если оно есть
             if (mainMenuPanel != null)
                 mainMenuPanel.SetActive(false);
         }
@@ -62,14 +66,12 @@ public class UIManager : MonoBehaviour
 
     private void OnEnable()
     {
-        // Подписываемся на события здоровья и опыта игрока
         if (playerHealth != null)
             playerHealth.OnHealthChanged += UpdateHealthBar;
 
         if (playerController != null)
             playerController.OnExperienceChanged += UpdateLevelText;
 
-        // Подписываемся на клики по кнопкам улучшений
         if (upgradeDamageButton != null)
             upgradeDamageButton.onClick.AddListener(OnUpgradeDamageClicked);
 
@@ -79,7 +81,6 @@ public class UIManager : MonoBehaviour
         if (healButton != null)
             healButton.onClick.AddListener(SelectHealUpgrade);
 
-        // Подписываем кнопки меню паузы
         if (resumeButton != null)
             resumeButton.onClick.AddListener(OnResumeButtonClicked);
 
@@ -89,7 +90,6 @@ public class UIManager : MonoBehaviour
         if (restartButton != null)
             restartButton.onClick.AddListener(RestartGame);
 
-        // Подписываем кнопки главного меню
         if (startGameButton != null)
             startGameButton.onClick.AddListener(StartGame);
 
@@ -102,7 +102,6 @@ public class UIManager : MonoBehaviour
 
     private void OnDisable()
     {
-        // Отписываемся при уничтожении/выключении объекта
         if (playerHealth != null)
             playerHealth.OnHealthChanged -= UpdateHealthBar;
 
@@ -127,7 +126,6 @@ public class UIManager : MonoBehaviour
         if (restartButton != null)
             restartButton.onClick.RemoveListener(RestartGame);
 
-        // Отписываем кнопки главного меню
         if (startGameButton != null)
             startGameButton.onClick.RemoveListener(StartGame);
 
@@ -140,12 +138,9 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
-        // Если это главное меню - не обрабатываем паузу
         if (isMainMenu) return;
-
         if (isGameOver) return;
 
-        // Проверяем, не открыто ли меню улучшений
         if (levelUpPanel != null && levelUpPanel.activeSelf)
             return;
 
@@ -164,7 +159,6 @@ public class UIManager : MonoBehaviour
             mainMenuPanel.SetActive(true);
         }
 
-        // Скрываем все остальные панели
         if (pauseMenuPanel != null) pauseMenuPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (levelUpPanel != null) levelUpPanel.SetActive(false);
@@ -177,22 +171,16 @@ public class UIManager : MonoBehaviour
     {
         Debug.Log($"Starting game, loading scene: {gameSceneName}");
 
-        // Скрываем главное меню
         if (mainMenuPanel != null)
             mainMenuPanel.SetActive(false);
 
-        // Загружаем игровую сцену
-        SceneManager.LoadScene("GameScene");
-
-        // Сбрасываем флаг главного меню
+        SceneManager.LoadScene(gameSceneName);
         isMainMenu = false;
-
         Time.timeScale = 1f;
     }
 
     private void ContinueGame()
     {
-        // Проверяем, есть ли сохраненная игра
         if (HasSaveGame())
         {
             Debug.Log("Loading saved game...");
@@ -210,27 +198,20 @@ public class UIManager : MonoBehaviour
         Debug.Log("Quitting game...");
 
 #if UNITY_EDITOR
-        // Если в редакторе - останавливаем игру
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-            // В собранной игре - закрываем приложение
-            Application.Quit();
+        Application.Quit();
 #endif
     }
 
-    // Проверка наличия сохранения
     private bool HasSaveGame()
     {
-        // Здесь можно добавить проверку сохранений
-        // Например: return PlayerPrefs.HasKey("SaveGame");
-        return false; // Пока возвращаем false
+        return false;
     }
 
     private void LoadGame()
     {
-        // Здесь логика загрузки сохранения
         Debug.Log("Loading saved game...");
-        // Загружаем сцену с сохраненным прогрессом
         SceneManager.LoadScene(gameSceneName);
     }
 
@@ -276,16 +257,22 @@ public class UIManager : MonoBehaviour
     {
         if (playerController != null)
         {
-            playerController.UpgradeSpeed(1.2f);
+            // РЎРѕР·РґР°РµРј UpgradeData РґР»СЏ СЃРєРѕСЂРѕСЃС‚Рё РїСЂСЏРјРѕ РІ РєРѕРґРµ
+            UpgradeData speedUpgrade = ScriptableObject.CreateInstance<UpgradeData>();
+            speedUpgrade.upgradeType = UpgradeType.MoveSpeed;
+            speedUpgrade.value = 1.5f; // РќР° СЃРєРѕР»СЊРєРѕ СѓРІРµР»РёС‡РёС‚СЊ СЃРєРѕСЂРѕСЃС‚СЊ
+            playerController.ApplyUpgrade(speedUpgrade);
         }
         CloseLevelUpMenu();
     }
+
 
     private void SelectHealUpgrade()
     {
         if (playerHealth != null)
         {
-            playerHealth.Heal(30f);
+            playerHealth.Heal(healAmount);
+            Debug.Log($"Healed for {healAmount} HP");
         }
         CloseLevelUpMenu();
     }
@@ -295,7 +282,11 @@ public class UIManager : MonoBehaviour
         AutoWeapon weapon = FindFirstObjectByType<AutoWeapon>();
         if (weapon != null)
         {
-            weapon.UpgradeDamage(10f);
+            // РЎРѕР·РґР°РµРј UpgradeData РґР»СЏ СѓСЂРѕРЅР° РїСЂСЏРјРѕ РІ РєРѕРґРµ
+            UpgradeData damageUpgrade = ScriptableObject.CreateInstance<UpgradeData>();
+            damageUpgrade.upgradeType = UpgradeType.Damage;
+            damageUpgrade.value = 10f; // РќР° СЃРєРѕР»СЊРєРѕ СѓРІРµР»РёС‡РёС‚СЊ СѓСЂРѕРЅ
+            weapon.ApplyUpgrade(damageUpgrade);
         }
         else
         {
@@ -319,7 +310,6 @@ public class UIManager : MonoBehaviour
 
     public void TogglePause()
     {
-        // Не включаем паузу, если игра закончена или открыто меню улучшений
         if (isGameOver) return;
         if (levelUpPanel != null && levelUpPanel.activeSelf) return;
 
@@ -335,17 +325,14 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // Отдельный метод для кнопки Resume
     private void OnResumeButtonClicked()
     {
-        // Проверяем, что игра действительно на паузе
         if (isPaused)
         {
             ResumeGame();
         }
         else
         {
-            // Если по какой-то причине кнопка нажата, а паузы нет - просто скрываем панель
             if (pauseMenuPanel != null)
                 pauseMenuPanel.SetActive(false);
         }
@@ -393,8 +380,8 @@ public class UIManager : MonoBehaviour
         Time.timeScale = 1f;
         isGameOver = false;
         isPaused = false;
+        cachedWeapon = null;
 
-        // Скрываем все панели
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (pauseMenuPanel != null) pauseMenuPanel.SetActive(false);
         if (levelUpPanel != null) levelUpPanel.SetActive(false);
@@ -411,12 +398,27 @@ public class UIManager : MonoBehaviour
         Time.timeScale = 1f;
         isGameOver = false;
         isPaused = false;
-
-        // Устанавливаем флаг главного меню
+        cachedWeapon = null;
         isMainMenu = true;
 
-        // Загружаем сцену главного меню
         SceneManager.LoadScene("MainMenu");
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private AutoWeapon GetWeapon()
+    {
+        if (cachedWeapon == null)
+        {
+            cachedWeapon = FindFirstObjectByType<AutoWeapon>();
+            if (cachedWeapon == null)
+            {
+                Debug.LogWarning("AutoWeapon not found on scene!");
+            }
+        }
+        return cachedWeapon;
     }
 
     #endregion
